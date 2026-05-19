@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "310678369618",
+    "project_id": "appdoublekrestaurant",
+    "storage_bucket": "appdoublekrestaurant.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:310678369618:android:ed9613c80786fc4d7bf68b",
+        "android_client_info": {
+          "package_name": "com.example.app_doublekrestaurant"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJqtOb22suQB8AMvW8H5sT0HShTBN7io4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
