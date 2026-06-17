@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
@@ -202,7 +203,7 @@ fun AdminMenuItemRow(item: FoodItem, accentColor: Color, onClick: () -> Unit) {
             }
             Spacer(Modifier.width(12.dp))
             Column {
-                Text(item.name, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(item.name, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 if (item.isFeatured) {
                     Surface(color = Color(0xFFFFE0B2), shape = RoundedCornerShape(4.dp)) {
                         Text("BEST SELLER", color = Color(0xFFE65100), fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
@@ -212,7 +213,7 @@ fun AdminMenuItemRow(item: FoodItem, accentColor: Color, onClick: () -> Unit) {
         }
         
         // Category
-        Text(item.categoryName, modifier = Modifier.weight(1.5f), color = Color.Gray, fontSize = 14.sp)
+        Text(item.categoryName, modifier = Modifier.weight(1.5f), color = Color.Gray, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         
         // Price
         Text(formatVnd(item.price).replace("₫", ""), modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, color = accentColor, textAlign = TextAlign.End, fontSize = 16.sp)

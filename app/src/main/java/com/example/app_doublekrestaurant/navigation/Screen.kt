@@ -22,6 +22,9 @@ sealed class Screen(val route: String) {
     object UserReviewManagement : Screen("user_review_mgmt")
     object UserVouchers : Screen("user_vouchers")
     object UserSupport : Screen("user_support")
+    object UserQRPayment : Screen("user_qr_payment/{totalAmount}") {
+        fun createRoute(totalAmount: Long) = "user_qr_payment/$totalAmount"
+    }
     object UserFoodDetail : Screen("user_food_detail/{foodId}") {
         fun createRoute(foodId: String) = "user_food_detail/$foodId"
     }

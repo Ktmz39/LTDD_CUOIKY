@@ -29,6 +29,7 @@ import com.example.app_doublekrestaurant.ui.user.menu.UserMenuScreen
 import com.example.app_doublekrestaurant.ui.admin.reports.AdminReportsScreen
 import com.example.app_doublekrestaurant.ui.user.reviews.UserSubmitReviewScreen
 import com.example.app_doublekrestaurant.ui.user.home.UserFoodDetailScreen
+import com.example.app_doublekrestaurant.ui.user.payment.QRPaymentScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController, startDestination: String) {
@@ -104,7 +105,31 @@ fun AppNavigation(navController: NavHostController, startDestination: String) {
             com.example.app_doublekrestaurant.ui.user.cart.UserCartScreen(
                 viewModel = cartViewModel,
                 onBack = { navController.popBackStack() },
-                onCheckoutSuccess = { navController.navigate(Screen.UserOrderStatus.route) { popUpTo(Screen.UserHome.route) } }
+                onCheckoutSuccess = { navController.navigate(Screen.UserOrderStatus.route) { popUpTo(Screen.UserHome.route) } },
+                onNavigateToQRPayment = { amount ->
+                    navController.navigate(Screen.UserQRPayment.createRoute(amount))
+                }
+            )
+        }
+        composable(
+            route = Screen.UserQRPayment.route,
+            arguments = listOf(navArgument("totalAmount") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val amount = backStackEntry.arguments?.getLong("totalAmount") ?: 0L
+            QRPaymentScreen(
+                totalAmount = amount,
+                onPaymentConfirmed = {
+                    // Checkout với PAY_NOW sau khi user xác nhận đã chuyển khoản
+                    cartViewModel.checkout(
+                        paymentMethod = com.example.app_doublekrestaurant.data.model.PaymentMethod.PAY_NOW,
+                        onSuccess = {
+                            navController.navigate(Screen.UserOrderStatus.route) {
+                                popUpTo(Screen.UserHome.route)
+                            }
+                        }
+                    )
+                },
+                onBack = { navController.popBackStack() }
             )
         }
         composable(Screen.UserOrderStatus.route) {

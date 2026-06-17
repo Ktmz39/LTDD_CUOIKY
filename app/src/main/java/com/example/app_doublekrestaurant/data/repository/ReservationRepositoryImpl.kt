@@ -33,7 +33,6 @@ class ReservationRepositoryImpl @Inject constructor(
         val query: Query = if (userId != null) {
             firestore.collection("reservations")
                 .whereEqualTo("userId", userId)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
         } else {
             firestore.collection("reservations")
                 .orderBy("createdAt", Query.Direction.DESCENDING)

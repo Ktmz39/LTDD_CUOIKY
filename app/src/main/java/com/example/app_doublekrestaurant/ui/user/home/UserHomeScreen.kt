@@ -37,6 +37,7 @@ import com.example.app_doublekrestaurant.ui.user.cart.UserCartViewModel
 import com.example.app_doublekrestaurant.util.formatVnd
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,6 +71,8 @@ fun UserHomeScreen(
 
     val mainColor = Color(0xFFAC2D00)
     val darkBg = Color(0xFF0F2027)
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
     
     var addedToCartTrigger by remember { mutableIntStateOf(0) }
     
@@ -80,62 +83,189 @@ fun UserHomeScreen(
         }
     }
 
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                modifier = Modifier.width(280.dp),
+                drawerContainerColor = Color.White
+            ) {
+                // Sidebar Header - Logo
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color(0xFF5C1A00), Color(0xFFAC2D00), Color(0xFFD4601A))
+                            )
+                        )
+                        .padding(24.dp)
+                        .clickable {
+                            scope.launch { drawerState.close() }
+                        }
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(Color.White.copy(0.2f), RoundedCornerShape(12.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Restaurant, null, tint = Color.White, modifier = Modifier.size(24.dp))
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text("DoubleK", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                            Text("Restaurant", color = Color.White.copy(0.7f), fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                // User info
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (uiState.user?.avatarUrl?.isNotEmpty() == true) {
+                        AsyncImage(
+                            model = uiState.user?.avatarUrl,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp).clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier.size(40.dp).background(mainColor, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(userName.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(uiState.user?.fullName ?: "Khách", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        Text(greeting, color = Color.Gray, fontSize = 12.sp)
+                    }
+                }
+
+                HorizontalDivider(color = Color(0xFFF0F0F0))
+                Spacer(Modifier.height(8.dp))
+
+                // Navigation Items
+                DrawerNavItem(Icons.Default.Home, "Trang chủ", mainColor) {
+                    scope.launch { drawerState.close() }
+                }
+                DrawerNavItem(Icons.Default.RestaurantMenu, "Thực đơn", mainColor) {
+                    scope.launch { drawerState.close() }; onNavigateToMenu()
+                }
+                DrawerNavItem(Icons.Default.TableBar, "Đặt bàn", mainColor) {
+                    scope.launch { drawerState.close() }; onNavigateToBooking()
+                }
+                DrawerNavItem(Icons.Default.ShoppingCart, "Giỏ hàng", mainColor) {
+                    scope.launch { drawerState.close() }; onNavigateToCart()
+                }
+                DrawerNavItem(Icons.Default.ReceiptLong, "Lịch sử đơn hàng", mainColor) {
+                    scope.launch { drawerState.close() }; onNavigateToOrders()
+                }
+                DrawerNavItem(Icons.Default.ConfirmationNumber, "Vouchers", mainColor) {
+                    scope.launch { drawerState.close() }; onNavigateToVouchers()
+                }
+                DrawerNavItem(Icons.Default.Star, "Đánh giá", mainColor) {
+                    scope.launch { drawerState.close() }; onNavigateToReviews()
+                }
+                DrawerNavItem(Icons.Default.Chat, "Hỗ trợ", mainColor) {
+                    scope.launch { drawerState.close() }; onNavigateToSupport()
+                }
+                DrawerNavItem(Icons.Default.AutoAwesome, "AI Assistant", mainColor) {
+                    scope.launch { drawerState.close() }; onNavigateToAIChat()
+                }
+
+                Spacer(Modifier.weight(1f))
+                HorizontalDivider(color = Color(0xFFF0F0F0))
+                DrawerNavItem(Icons.Default.Person, "Cá nhân", mainColor) {
+                    scope.launch { drawerState.close() }; onNavigateToProfile()
+                }
+                Spacer(Modifier.height(16.dp))
+            }
+        }
+    ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Restaurant,
-                            null,
-                            tint = mainColor,
-                            modifier = Modifier.size(24.dp)
+            // Gradient header matching web design
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color(0xFF5C1A00), Color(0xFFAC2D00), Color(0xFFD4601A))
                         )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "DoubleK Restaurant",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = mainColor
-                        )
+                    )
+                    .statusBarsPadding()
+                    .height(56.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Hamburger menu
+                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                        Icon(Icons.Default.Menu, "Menu", tint = Color.White)
                     }
-                },
-                actions = {
+                    // DoubleK Logo - clickable (already on home, just close drawer)
+                    Row(
+                        modifier = Modifier.clickable { /* Already on home */ },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Restaurant, null, tint = Color.White, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("DoubleK", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+
+                    // Spacer to push right actions to end
+                    Spacer(Modifier.weight(1f))
+
+                    // Right actions: chat + notification + cart + avatar
                     IconButton(onClick = onNavigateToSupport) {
-                        Icon(Icons.Default.Chat, null, tint = mainColor)
+                        Icon(Icons.Default.Chat, null, tint = Color.White)
                     }
                     IconButton(onClick = onNavigateToNotifications) {
-                        Icon(Icons.Default.NotificationsNone, null, tint = mainColor)
+                        Icon(Icons.Default.Notifications, null, tint = Color.White)
+                    }
+                    Box {
+                        IconButton(onClick = onNavigateToCart) {
+                            Icon(Icons.Default.ShoppingCart, null, tint = Color.White)
+                        }
+                        if (cartCount > 0) {
+                            Badge(
+                                modifier = Modifier.align(Alignment.TopEnd).offset(x = (-4).dp, y = 4.dp),
+                                containerColor = Color.Yellow,
+                                contentColor = Color.Black
+                            ) {
+                                Text(cartCount.toString(), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                     IconButton(onClick = onNavigateToProfile) {
                         if (uiState.user?.avatarUrl?.isNotEmpty() == true) {
                             AsyncImage(
                                 model = uiState.user?.avatarUrl,
                                 contentDescription = "Profile",
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape),
+                                modifier = Modifier.size(32.dp).clip(CircleShape),
                                 contentScale = ContentScale.Crop
                             )
                         } else {
                             Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .background(mainColor, CircleShape),
+                                modifier = Modifier.size(32.dp).background(Color.White.copy(0.2f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = userName.take(1).uppercase(),
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp
-                                )
+                                Text(userName.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             }
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
+                }
+            }
         },
         bottomBar = {
             UserBottomNavigation(selectedIndex = selectedTab) { index ->
@@ -143,7 +273,7 @@ fun UserHomeScreen(
                 when (index) {
                     1 -> onNavigateToMenu()
                     2 -> onNavigateToBooking()
-                    3 -> onNavigateToOrders()
+                    3 -> onNavigateToCart()
                     4 -> onNavigateToProfile()
                 }
             }
@@ -357,6 +487,7 @@ fun UserHomeScreen(
         }
         }
     }
+    } // end ModalNavigationDrawer
 }
 
 
@@ -454,7 +585,7 @@ fun UserBottomNavigation(selectedIndex: Int = 0, onTabSelected: (Int) -> Unit = 
             Triple("Trang chủ", Icons.Default.Home, 0),
             Triple("Thực đơn", Icons.Default.RestaurantMenu, 1),
             Triple("Đặt bàn", Icons.Default.TableBar, 2),
-            Triple("Đơn hàng", Icons.Default.ReceiptLong, 3),
+            Triple("Giỏ hàng", Icons.Default.ShoppingCart, 3),
             Triple("Cá nhân", Icons.Default.PersonOutline, 4)
         ).forEach { (label, icon, index) ->
             NavigationBarItem(
@@ -470,6 +601,25 @@ fun UserBottomNavigation(selectedIndex: Int = 0, onTabSelected: (Int) -> Unit = 
                     unselectedTextColor = Color.Gray
                 )
             )
+        }
+    }
+}
+
+@Composable
+fun DrawerNavItem(icon: ImageVector, label: String, accentColor: Color, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, null, tint = accentColor, modifier = Modifier.size(22.dp))
+            Spacer(Modifier.width(16.dp))
+            Text(label, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF333333))
         }
     }
 }

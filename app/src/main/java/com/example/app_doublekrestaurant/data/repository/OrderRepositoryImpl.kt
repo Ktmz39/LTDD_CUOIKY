@@ -35,18 +35,107 @@ class OrderRepositoryImpl @Inject constructor(
                 return@addSnapshotListener 
             }
             val list = snapshot?.documents?.mapNotNull { doc ->
-                doc.toObject(Order::class.java)?.copy(id = doc.id)
+                try {
+                    // Parse thủ công để tránh crash khi createdAt là Firestore Timestamp hoặc Long ms
+                    val createdAt = safeGetLongMs(doc, "createdAt")
+                    val updatedAt = safeGetLongMs(doc, "updatedAt")
+
+                    @Suppress("UNCHECKED_CAST")
+                    val rawItems = doc.get("items") as? List<Map<String, Any?>> ?: emptyList()
+                    val items = rawItems.map { m ->
+                        com.example.app_doublekrestaurant.data.model.OrderItem(
+                            foodItemId = m["foodItemId"] as? String ?: "",
+                            name = m["name"] as? String ?: "",
+                            price = (m["price"] as? Number)?.toDouble() ?: 0.0,
+                            quantity = (m["quantity"] as? Number)?.toInt() ?: 1,
+                            note = m["note"] as? String ?: "",
+                            imageUrl = m["imageUrl"] as? String ?: ""
+                        )
+                    }
+                    Order(
+                        id = doc.id,
+                        userId = doc.getString("userId") ?: "",
+                        userName = doc.getString("userName") ?: "",
+                        userPhone = doc.getString("userPhone") ?: "",
+                        userAvatarUrl = doc.getString("userAvatarUrl") ?: "",
+                        items = items,
+                        type = doc.getString("type") ?: "TAKEAWAY",
+                        status = doc.getString("status") ?: "PENDING",
+                        tableId = doc.getString("tableId") ?: "",
+                        tableNumber = (doc.getLong("tableNumber") ?: 0L).toInt(),
+                        deliveryAddress = doc.getString("deliveryAddress") ?: "",
+                        totalAmount = (doc.getDouble("totalAmount") ?: doc.getLong("totalAmount")?.toDouble()) ?: 0.0,
+                        note = doc.getString("note") ?: "",
+                        paymentMethod = doc.getString("paymentMethod") ?: "PAY_ON_DELIVERY",
+                        createdAt = createdAt,
+                        updatedAt = updatedAt,
+                        staffId = doc.getString("staffId") ?: ""
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.e("OrderRepo", "Parse order ${doc.id} failed: ${e.message}")
+                    null
+                }
             } ?: emptyList()
             trySend(list)
         }
         awaitClose { subscription.remove() }
     }
 
+    // Helper: đọc field có thể là Long (ms) hoặc Firestore Timestamp
+    private fun safeGetLongMs(
+        doc: com.google.firebase.firestore.DocumentSnapshot,
+        field: String
+    ): Long = try {
+        doc.getLong(field)
+            ?: doc.getTimestamp(field)?.let { it.seconds * 1000 + it.nanoseconds / 1_000_000 }
+            ?: 0L
+    } catch (e: Exception) {
+        0L
+    }
+
+
     override fun getOrderById(orderId: String): Flow<Order?> = callbackFlow {
         val subscription = firestore.collection("orders").document(orderId)
             .addSnapshotListener { snapshot, _ ->
-                val order = snapshot?.toObject(Order::class.java)?.copy(id = snapshot.id)
-                trySend(order)
+                if (snapshot == null || !snapshot.exists()) { trySend(null); return@addSnapshotListener }
+                try {
+                    @Suppress("UNCHECKED_CAST")
+                    val rawItems = snapshot.get("items") as? List<Map<String, Any?>> ?: emptyList()
+                    val items = rawItems.map { m ->
+                        com.example.app_doublekrestaurant.data.model.OrderItem(
+                            foodItemId = m["foodItemId"] as? String ?: "",
+                            name = m["name"] as? String ?: "",
+                            price = (m["price"] as? Number)?.toDouble() ?: 0.0,
+                            quantity = (m["quantity"] as? Number)?.toInt() ?: 1,
+                            note = m["note"] as? String ?: "",
+                            imageUrl = m["imageUrl"] as? String ?: ""
+                        )
+                    }
+                    val order = Order(
+                        id = snapshot.id,
+                        userId = snapshot.getString("userId") ?: "",
+                        userName = snapshot.getString("userName") ?: "",
+                        userPhone = snapshot.getString("userPhone") ?: "",
+                        userAvatarUrl = snapshot.getString("userAvatarUrl") ?: "",
+                        items = items,
+                        type = snapshot.getString("type") ?: "TAKEAWAY",
+                        status = snapshot.getString("status") ?: "PENDING",
+                        tableId = snapshot.getString("tableId") ?: "",
+                        tableNumber = (snapshot.getLong("tableNumber") ?: 0L).toInt(),
+                        deliveryAddress = snapshot.getString("deliveryAddress") ?: "",
+                        totalAmount = (snapshot.getDouble("totalAmount") ?: snapshot.getLong("totalAmount")?.toDouble()) ?: 0.0,
+                        note = snapshot.getString("note") ?: "",
+                        paymentMethod = snapshot.getString("paymentMethod") ?: "PAY_ON_DELIVERY",
+                        createdAt = safeGetLongMs(snapshot, "createdAt"),
+                        updatedAt = safeGetLongMs(snapshot, "updatedAt"),
+                        staffId = snapshot.getString("staffId") ?: ""
+                    )
+                    trySend(order)
+                } catch (e: Exception) {
+                    android.util.Log.e("OrderRepo", "Parse getOrderById failed: ${e.message}")
+                    trySend(null)
+                }
+
             }
         awaitClose { subscription.remove() }
     }

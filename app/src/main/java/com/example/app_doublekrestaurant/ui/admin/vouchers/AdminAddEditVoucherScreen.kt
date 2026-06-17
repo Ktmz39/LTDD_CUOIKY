@@ -302,7 +302,17 @@ fun AdminAddEditVoucherScreen(
                         expiryDateStr = it
                         try {
                             val parsed = dateFormat.parse(it)
-                            if (parsed != null) expiryDate = parsed.time
+                            if (parsed != null) {
+                                // Set đến cuối ngày 23:59:59 để voucher hợp lệ suốt ngày
+                                val cal = Calendar.getInstance().apply {
+                                    timeInMillis = parsed.time
+                                    set(Calendar.HOUR_OF_DAY, 23)
+                                    set(Calendar.MINUTE, 59)
+                                    set(Calendar.SECOND, 59)
+                                    set(Calendar.MILLISECOND, 999)
+                                }
+                                expiryDate = cal.timeInMillis
+                            }
                         } catch (e: Exception) {}
                     },
                     label = { Text("Ngày kết thúc (dd/MM/yyyy)") },
@@ -310,7 +320,12 @@ fun AdminAddEditVoucherScreen(
                         IconButton(onClick = {
                             val calendar = Calendar.getInstance().apply { timeInMillis = if (expiryDate > 0) expiryDate else System.currentTimeMillis() + 7L * 24 * 60 * 60 * 1000 }
                             DatePickerDialog(context, { _, y, m, d ->
+                                // Reset về cuối ngày 23:59:59 để voucher hợp lệ suốt cả ngày
                                 calendar.set(y, m, d)
+                                calendar.set(Calendar.HOUR_OF_DAY, 23)
+                                calendar.set(Calendar.MINUTE, 59)
+                                calendar.set(Calendar.SECOND, 59)
+                                calendar.set(Calendar.MILLISECOND, 999)
                                 expiryDate = calendar.timeInMillis
                                 expiryDateStr = dateFormat.format(calendar.time)
                             }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()

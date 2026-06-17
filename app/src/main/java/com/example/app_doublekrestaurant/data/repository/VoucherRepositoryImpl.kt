@@ -92,9 +92,11 @@ class VoucherRepositoryImpl @Inject constructor(
             createdAt = doc.getLong("createdAt") ?: 0L
         )
             
-        if (voucher.expiryDate > 0 && voucher.expiryDate < System.currentTimeMillis()) {
-            throw Exception("Mã giảm giá đã hết hạn")
-        }
+        // ─── Logic đồng bộ với Web ──────────────────────────────────────────
+        // Web chỉ check isActive + minOrderAmount, không check expiryDate.
+        // Admin dùng toggle isActive để tắt/bật voucher thủ công.
+        // expiryDate chỉ dùng để hiển thị HSD cho user, không dùng để chặn áp mã.
+        // ─────────────────────────────────────────────────────────────────────
         
         if (voucher.usageLimit > 0 && voucher.usedCount >= voucher.usageLimit) {
             throw Exception("Mã giảm giá đã hết lượt sử dụng")

@@ -64,7 +64,7 @@ fun UserFoodDetailScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(food?.name ?: "Chi tiết món ăn", fontWeight = FontWeight.Bold) },
+                title = { Text(food?.name ?: "Chi tiết món ăn", fontWeight = FontWeight.Bold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, null)
@@ -126,7 +126,7 @@ fun UserFoodDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(food.name, fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                            Text(food.name, fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                             Surface(
                                 color = Color(0xFFFDF1EB),
                                 shape = RoundedCornerShape(12.dp)

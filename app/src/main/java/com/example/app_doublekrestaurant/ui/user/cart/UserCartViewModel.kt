@@ -56,15 +56,17 @@ class UserCartViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            authRepository.currentUser.collect { user -> 
-                currentUser = user 
-                
+            authRepository.currentUser.collect { user ->
+                currentUser = user
+
                 // Fetch details for claimed vouchers
                 if (user != null && user.claimedVouchers.isNotEmpty()) {
                     launch {
                         voucherRepository.getVouchers().collect { allVouchers ->
-                            _claimedVouchers.value = allVouchers.filter { 
-                                it.id in user.claimedVouchers && it.isActive 
+                            // Đồng bộ với web: chỉ loại voucher bị tắt (isActive=false)
+                            // expiryDate chỉ hiển thị, không dùng để lọc
+                            _claimedVouchers.value = allVouchers.filter {
+                                it.id in user.claimedVouchers && it.isActive
                             }
                         }
                     }
@@ -94,28 +96,28 @@ class UserCartViewModel @Inject constructor(
     }
 
     fun updateQuantity(foodItemId: String, quantity: Int) {
-        if (quantity <= 0) { 
+        if (quantity <= 0) {
             removeFromCart(foodItemId)
-            return 
+            return
         }
         viewModelScope.launch {
             cartDao.updateQuantity(foodItemId, quantity)
         }
     }
-    
+
     private fun recalculateCurrentDiscount() {
         val voucher = _uiState.value.selectedVoucher ?: return
         val newDiscount = calculateDiscount(voucher, getSubtotal())
         _uiState.value = _uiState.value.copy(discountAmount = newDiscount)
     }
 
-    fun clearCart() { 
+    fun clearCart() {
         viewModelScope.launch {
             cartDao.clearCart()
         }
         _uiState.value = _uiState.value.copy(selectedVoucher = null, discountAmount = 0.0)
     }
-    
+
     fun applyVoucher(code: String) {
         if (code.isEmpty()) return
         viewModelScope.launch {
@@ -136,11 +138,11 @@ class UserCartViewModel @Inject constructor(
             )
         }
     }
-    
+
     fun removeVoucher() {
         _uiState.value = _uiState.value.copy(selectedVoucher = null, discountAmount = 0.0)
     }
-    
+
     private fun calculateDiscount(voucher: Voucher, amount: Double): Double {
         return if (voucher.discountPercentage > 0) {
             val discount = amount * (voucher.discountPercentage / 100.0)
@@ -154,7 +156,7 @@ class UserCartViewModel @Inject constructor(
     fun getTotalPrice(): Double = maxOf(0.0, getSubtotal() - _uiState.value.discountAmount)
     fun getTotalCount(): Int = _cartItems.value.sumOf { it.quantity }
 
-    fun checkout(orderType: OrderType = OrderType.DINE_IN, note: String = "", onSuccess: () -> Unit) {
+    fun checkout(orderType: OrderType = OrderType.DINE_IN, note: String = "", paymentMethod: PaymentMethod = PaymentMethod.PAY_ON_DELIVERY, onSuccess: () -> Unit) {
         val user = currentUser ?: run {
             _uiState.value = _uiState.value.copy(error = "Vui lòng đăng nhập để đặt hàng")
             return
@@ -188,6 +190,7 @@ class UserCartViewModel @Inject constructor(
                 status = OrderStatus.PENDING.name,
                 totalAmount = getTotalPrice(),
                 note = note,
+                paymentMethod = paymentMethod.name,
                 createdAt = System.currentTimeMillis(),
                 updatedAt = System.currentTimeMillis()
             )

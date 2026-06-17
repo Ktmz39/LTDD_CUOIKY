@@ -1,9 +1,15 @@
 package com.example.app_doublekrestaurant.ui.user.cart
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -12,31 +18,59 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import com.example.app_doublekrestaurant.data.model.CartItem
+import com.example.app_doublekrestaurant.data.model.PaymentMethod
 import com.example.app_doublekrestaurant.util.formatVnd
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserCartScreen(
-    viewModel: UserCartViewModel, // Passed from NavHost as shared VM
+    viewModel: UserCartViewModel,
     onBack: () -> Unit,
-    onCheckoutSuccess: () -> Unit
+    onCheckoutSuccess: () -> Unit,
+    onNavigateToQRPayment: (Long) -> Unit
 ) {
     val items by viewModel.cartItems.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showPaymentDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearError()
         }
+    }
+
+    // Show payment dialog
+    if (showPaymentDialog) {
+        PaymentMethodDialog(
+            isLoading = uiState.isCheckingOut,
+            onDismiss = { showPaymentDialog = false },
+            onConfirm = { method ->
+                showPaymentDialog = false
+                if (method == PaymentMethod.PAY_NOW) {
+                    // Navigate to QR screen — checkout sau khi user xác nhận
+                    onNavigateToQRPayment(viewModel.getTotalPrice().toLong())
+                } else {
+                    // PAY_ON_DELIVERY: đặt hàng luôn
+                    viewModel.checkout(
+                        paymentMethod = method,
+                        onSuccess = onCheckoutSuccess
+                    )
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -54,9 +88,7 @@ fun UserCartScreen(
                     total = viewModel.getTotalPrice(),
                     itemCount = viewModel.getTotalCount(),
                     isLoading = uiState.isCheckingOut,
-                    onCheckout = {
-                        viewModel.checkout(onSuccess = onCheckoutSuccess)
-                    }
+                    onCheckout = { showPaymentDialog = true }
                 )
             }
         },
@@ -339,5 +371,200 @@ fun EmptyCartView(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
         Text("Giỏ hàng trống", style = MaterialTheme.typography.headlineSmall, color = Color.Gray)
         Text("Hãy chọn những món ăn yêu thích nhé!", color = Color.LightGray)
+    }
+}
+
+@Composable
+fun PaymentMethodDialog(
+    isLoading: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: (PaymentMethod) -> Unit
+) {
+    var selected by remember { mutableStateOf(PaymentMethod.PAY_ON_DELIVERY) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .clip(RoundedCornerShape(28.dp))
+                .background(Color.White)
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                // Header
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFAC2D00).copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Payment,
+                            contentDescription = null,
+                            tint = Color(0xFFAC2D00),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            "Chọn phương thức thanh toán",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp,
+                            color = Color(0xFF1A1A1A)
+                        )
+                        Text(
+                            "Chọn cách bạn muốn thanh toán",
+                            fontSize = 13.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                // Option: Pay Now
+                PaymentOptionCard(
+                    icon = Icons.Default.CreditCard,
+                    title = "Thanh toán ngay",
+                    subtitle = "Thanh toán trước khi nhà hàng chuẩn bị",
+                    isSelected = selected == PaymentMethod.PAY_NOW,
+                    accentColor = Color(0xFF1976D2),
+                    onClick = { selected = PaymentMethod.PAY_NOW }
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                // Option: Pay on Delivery
+                PaymentOptionCard(
+                    icon = Icons.Default.LocalAtm,
+                    title = "Thanh toán sau khi nhận hàng",
+                    subtitle = "Thanh toán khi nhà hàng mang đến tay bạn",
+                    isSelected = selected == PaymentMethod.PAY_ON_DELIVERY,
+                    accentColor = Color(0xFF2E7D32),
+                    onClick = { selected = PaymentMethod.PAY_ON_DELIVERY }
+                )
+
+                Spacer(Modifier.height(24.dp))
+
+                // Buttons
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(50.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Gray),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEEEEEE))
+                    ) {
+                        Text("Huỷ", fontWeight = FontWeight.SemiBold)
+                    }
+                    Button(
+                        onClick = { onConfirm(selected) },
+                        modifier = Modifier.weight(1f).height(50.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        enabled = !isLoading,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFAC2D00))
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.ShoppingBag, null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Đặt hàng", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PaymentOptionCard(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    isSelected: Boolean,
+    accentColor: Color,
+    onClick: () -> Unit
+) {
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.02f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "scale"
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(scale)
+            .clickable { onClick() }
+            .border(
+                width = if (isSelected) 2.dp else 1.dp,
+                color = if (isSelected) accentColor else Color(0xFFEEEEEE),
+                shape = RoundedCornerShape(16.dp)
+            ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) accentColor.copy(alpha = 0.06f) else Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (isSelected) accentColor.copy(alpha = 0.15f) else Color(0xFFF5F5F5)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = if (isSelected) accentColor else Color.Gray,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = if (isSelected) Color(0xFF1A1A1A) else Color(0xFF444444)
+                )
+                Text(
+                    subtitle,
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    lineHeight = 16.sp
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(if (isSelected) accentColor else Color.Transparent)
+                    .border(2.dp, if (isSelected) accentColor else Color(0xFFCCCCCC), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isSelected) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(13.dp)
+                    )
+                }
+            }
+        }
     }
 }

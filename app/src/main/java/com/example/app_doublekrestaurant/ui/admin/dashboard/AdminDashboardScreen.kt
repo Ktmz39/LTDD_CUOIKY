@@ -26,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.app_doublekrestaurant.data.model.*
 import com.example.app_doublekrestaurant.util.formatVnd
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,55 +53,141 @@ fun AdminDashboardScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     var isTableLayoutExpanded by remember { mutableStateOf(false) }
     var showRevenueDetailsSheet by remember { mutableStateOf(false) }
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                modifier = Modifier.width(280.dp),
+                drawerContainerColor = Color.White
+            ) {
+                // Sidebar Header
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color(0xFF5C1A00), Color(0xFFAC2D00), Color(0xFFD4601A))
+                            )
+                        )
+                        .padding(24.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier.size(44.dp).background(Color.White.copy(0.2f), RoundedCornerShape(12.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Restaurant, null, tint = Color.White, modifier = Modifier.size(24.dp))
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text("DoubleK", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                            Text("Admin Panel", color = Color.White.copy(0.7f), fontSize = 12.sp)
+                        }
+                    }
+                }
+                // Admin info
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (authState.currentUser?.avatarUrl?.isNotEmpty() == true) {
+                        AsyncImage(
+                            model = authState.currentUser?.avatarUrl,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp).clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier.size(40.dp).background(accentColor, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(adminName.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(authState.currentUser?.fullName ?: "Admin", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        Text("Quản trị viên", color = Color.Gray, fontSize = 12.sp)
+                    }
+                }
+                HorizontalDivider(color = Color(0xFFF0F0F0))
+                Spacer(Modifier.height(8.dp))
+
+                // Admin Nav Items
+                AdminDrawerNavItem(Icons.Default.Home, "Trang chủ", accentColor) { scope.launch { drawerState.close() } }
+                AdminDrawerNavItem(Icons.Default.RestaurantMenu, "Quản lý thực đơn", accentColor) { scope.launch { drawerState.close() }; onNavigateToMenu() }
+                AdminDrawerNavItem(Icons.Default.ReceiptLong, "Quản lý đơn hàng", accentColor) { scope.launch { drawerState.close() }; onNavigateToOrders() }
+                AdminDrawerNavItem(Icons.Default.TableBar, "Quản lý đặt bàn", accentColor) { scope.launch { drawerState.close() }; onNavigateToBooking() }
+                AdminDrawerNavItem(Icons.Default.GridView, "Quản lý bàn", accentColor) { scope.launch { drawerState.close() }; onNavigateToTables() }
+                AdminDrawerNavItem(Icons.Default.People, "Quản lý người dùng", accentColor) { scope.launch { drawerState.close() }; onNavigateToUsers() }
+                AdminDrawerNavItem(Icons.Default.ConfirmationNumber, "Vouchers", accentColor) { scope.launch { drawerState.close() }; onNavigateToVouchers() }
+                AdminDrawerNavItem(Icons.Default.Star, "Đánh giá", accentColor) { scope.launch { drawerState.close() }; onNavigateToReviews() }
+                AdminDrawerNavItem(Icons.Default.BarChart, "Thống kê", accentColor) { scope.launch { drawerState.close() }; onNavigateToStats() }
+                AdminDrawerNavItem(Icons.Default.Chat, "Hỗ trợ", accentColor) { scope.launch { drawerState.close() }; onNavigateToSupport() }
+
+                Spacer(Modifier.weight(1f))
+                HorizontalDivider(color = Color(0xFFF0F0F0))
+                AdminDrawerNavItem(Icons.Default.Person, "Hồ sơ", accentColor) { scope.launch { drawerState.close() }; onNavigateToProfile() }
+                AdminDrawerNavItem(Icons.Default.Logout, "Đăng xuất", Color.Red) { scope.launch { drawerState.close() }; onLogout() }
+                Spacer(Modifier.height(16.dp))
+            }
+        }
+    ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.RestaurantMenu, null, tint = accentColor, modifier = Modifier.size(24.dp))
-                        Spacer(Modifier.width(12.dp))
-                        Text("DoubleK Admin", fontWeight = FontWeight.Bold, color = accentColor, fontSize = 20.sp)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color(0xFF5C1A00), Color(0xFFAC2D00), Color(0xFFD4601A))
+                        )
+                    )
+                    .statusBarsPadding()
+                    .height(56.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                        Icon(Icons.Default.Menu, "Menu", tint = Color.White)
                     }
-                },
-                actions = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Restaurant, null, tint = Color.White, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("DoubleK", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+                    Spacer(Modifier.weight(1f))
                     IconButton(onClick = onNavigateToSupport) {
-                        Icon(Icons.Default.Chat, null, tint = accentColor)
+                        Icon(Icons.Default.Chat, null, tint = Color.White)
                     }
                     IconButton(onClick = onNavigateToNotifications) {
-                        BadgedBox(badge = { Badge { Text("5") } }) {
-                            Icon(Icons.Default.NotificationsNone, null)
-                        }
+                        Icon(Icons.Default.Notifications, null, tint = Color.White)
                     }
                     IconButton(onClick = onNavigateToProfile) {
                         if (authState.currentUser?.avatarUrl?.isNotEmpty() == true) {
                             AsyncImage(
                                 model = authState.currentUser?.avatarUrl,
                                 contentDescription = "Profile",
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape),
+                                modifier = Modifier.size(32.dp).clip(CircleShape),
                                 contentScale = ContentScale.Crop
                             )
                         } else {
                             Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .background(accentColor, CircleShape),
+                                modifier = Modifier.size(32.dp).background(Color.White.copy(0.2f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = adminName.take(1).uppercase(),
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp
-                                )
+                                Text(adminName.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             }
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
+                }
+            }
         },
         bottomBar = {
             AdminBottomNavigation(selectedTab = 0, onTabSelected = { 
@@ -403,6 +490,7 @@ fun AdminDashboardScreen(
             Spacer(modifier = Modifier.height(40.dp))
         }
     }
+    } // end ModalNavigationDrawer
 
     if (showRevenueDetailsSheet) {
         ModalBottomSheet(
@@ -730,6 +818,23 @@ fun AdminBottomNavigation(selectedTab: Int, onTabSelected: (Int) -> Unit) {
                     indicatorColor = Color(0xFFAC2D00).copy(0.1f)
                 )
             )
+        }
+    }
+}
+
+@Composable
+fun AdminDrawerNavItem(icon: ImageVector, label: String, accentColor: Color, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, null, tint = accentColor, modifier = Modifier.size(22.dp))
+            Spacer(Modifier.width(16.dp))
+            Text(label, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF333333))
         }
     }
 }
