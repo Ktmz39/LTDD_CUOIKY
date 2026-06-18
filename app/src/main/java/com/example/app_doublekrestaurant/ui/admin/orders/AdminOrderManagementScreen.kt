@@ -188,11 +188,11 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
                 }
             }
 
-            // 1. Xác định trạng thái kế tiếp của đơn hàng
+            // 1. Xác định trạng thái kế tiếp của đơn hàng và gán nhãn nút Duyệt chuẩn
             val nextStatus = when (currentStatus) {
                 OrderStatus.PENDING -> {
-                    val label = if (order.paymentMethod == "PAY_NOW") "Đã nhận tiền & Duyệt" else "Xác nhận"
-                    OrderStatus.CONFIRMED to label
+                    val btnLabel = if (order.paymentMethod == "PAY_NOW") "Đã nhận tiền & Duyệt" else "Xác nhận"
+                    OrderStatus.CONFIRMED to btnLabel
                 }
                 OrderStatus.CONFIRMED -> OrderStatus.PREPARING to "Bắt đầu làm"
                 OrderStatus.PREPARING -> OrderStatus.READY to "Sẵn sàng"
@@ -200,7 +200,7 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
                 else -> null
             }
 
-            // 2. ĐÃ ĐỒNG BỘ TRIỆT ĐỂ: Loại bỏ khối bọc ngoài, để các nút tự quyết định hiển thị độc lập
+            // 2. Hiển thị khối nút bấm độc lập, bóc tách biến chính xác để xóa lỗi Unresolved reference
             if (currentStatus == OrderStatus.PENDING || nextStatus != null) {
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -219,14 +219,16 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
 
                     // Nút Tiến độ: Duyệt đơn / Tiến hành chế biến...
                     if (nextStatus != null) {
-                        val (status, label) = nextStatus
+                        val targetStatus = nextStatus.first
+                        val targetLabel = nextStatus.second
+
                         Button(
-                            onClick = { onUpdateStatus(status) },
+                            onClick = { onUpdateStatus(targetStatus) },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFAC2D00))
                         ) {
-                            Text(label, fontSize = 12.sp)
+                            Text(targetLabel, fontSize = 12.sp)
                         }
                     }
                 }
