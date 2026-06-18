@@ -112,7 +112,20 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
                     Text("#${order.id.take(8).uppercase()}", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     Text(dateStr, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
-                OrderStatusBadge(currentStatus)
+
+                // ĐÃ ĐỒNG BỘ: Hiển thị phương thức thanh toán (Cổng QR / Tiền mặt) kế bên Trạng thái đơn hàng
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (order.paymentMethod == "PAY_NOW") {
+                        Surface(shape = RoundedCornerShape(20.dp), color = Color(0xFFE3F2FD)) {
+                            Text("Cổng QR", color = Color(0xFF0D47A1), fontWeight = FontWeight.Bold, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
+                        }
+                    } else {
+                        Surface(shape = RoundedCornerShape(20.dp), color = Color(0xFFE8F5E9)) {
+                            Text("Tiền mặt", color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
+                        }
+                    }
+                    OrderStatusBadge(currentStatus)
+                }
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = Color(0xFFF0F0F0))
@@ -195,11 +208,18 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
                         ) { Text("Hủy", fontSize = 12.sp) }
                     }
                     nextStatus?.let { (status, label) ->
+                        // ĐÃ ĐỒNG BỘ: Tự động đổi tên nút duyệt đơn thành "Đã nhận tiền & Duyệt" cho luồng kiểm tra QR thủ công
+                        val buttonLabel = if (currentStatus == OrderStatus.PENDING && order.paymentMethod == "PAY_NOW") {
+                            "Đã nhận tiền & Duyệt"
+                        } else {
+                            label
+                        }
+
                         Button(
                             onClick = { onUpdateStatus(status) },
                             modifier = Modifier.weight(1f), shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFAC2D00))
-                        ) { Text(label, fontSize = 12.sp) }
+                        ) { Text(buttonLabel, fontSize = 12.sp) }
                     }
                 }
             }
