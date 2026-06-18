@@ -5,7 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,8 +28,8 @@ fun QRPaymentScreen(
 ) {
     // 1. Cấu hình thông tin ngân hàng của bạn tại đây để nhận tiền
     val bankId = "mbbank" // Thay bằng mã ngân hàng của bạn (ví dụ: vcb, mbbank, icb...)
-    val accountNo = "0911816562" // Thay bằng số tài khoản ngân hàng thật của bạn
-    val accountName = "Tran Huynh Anh Kiet" // Thay bằng tên chủ tài khoản (Viết hoa không dấu)
+    val accountNo = "0905XXXXXX" // Thay bằng số tài khoản ngân hàng thật của bạn
+    val accountName = "NGUYEN VAN A" // Thay bằng tên chủ tài khoản (Viết hoa không dấu)
     val memo = "DoubleK Restaurant Thanh Toan" // Nội dung chuyển khoản
 
     // 2. Link API tự động tạo mã VietQR theo chuẩn quốc gia
@@ -45,7 +45,8 @@ fun QRPaymentScreen(
                 title = { Text("Thanh toán QR", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        // ĐÃ SỬA: Đổi sang icon hỗ trợ lật tự động để xóa cảnh báo deprecation
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -65,6 +66,7 @@ fun QRPaymentScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
+                // ĐÃ SỬA: Đổi từ cardCardElevation thành cardElevation chuẩn
                 elevation = CardDefaults.cardElevation(2.dp)
             ) {
                 Column(

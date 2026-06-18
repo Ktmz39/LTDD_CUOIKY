@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -46,7 +47,7 @@ fun AdminOrderManagementScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Quản lý đơn hàng", fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFAC2D00), titleContentColor = Color.White, navigationIconContentColor = Color.White)
             )
         },
@@ -113,7 +114,6 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
                     Text(dateStr, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
 
-                // ĐÃ ĐỒNG BỘ: Hiển thị phương thức thanh toán (Cổng QR / Tiền mặt) kế bên Trạng thái đơn hàng
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (order.paymentMethod == "PAY_NOW") {
                         Surface(shape = RoundedCornerShape(20.dp), color = Color(0xFFE3F2FD)) {
@@ -188,9 +188,12 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
                 }
             }
 
-            // Action buttons based on current status
+            // ĐÃ SỬA: Chuẩn hóa logic gán nhãn nút bấm để khử sạch lỗi cảnh báo Always False
             val nextStatus = when (currentStatus) {
-                OrderStatus.PENDING -> OrderStatus.CONFIRMED to "Xác nhận"
+                OrderStatus.PENDING -> {
+                    val label = if (order.paymentMethod == "PAY_NOW") "Đã nhận tiền & Duyệt" else "Xác nhận"
+                    OrderStatus.CONFIRMED to label
+                }
                 OrderStatus.CONFIRMED -> OrderStatus.PREPARING to "Bắt đầu làm"
                 OrderStatus.PREPARING -> OrderStatus.READY to "Sẵn sàng"
                 OrderStatus.READY -> OrderStatus.COMPLETED to "Hoàn thành"
@@ -208,18 +211,11 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
                         ) { Text("Hủy", fontSize = 12.sp) }
                     }
                     nextStatus?.let { (status, label) ->
-                        // ĐÃ ĐỒNG BỘ: Tự động đổi tên nút duyệt đơn thành "Đã nhận tiền & Duyệt" cho luồng kiểm tra QR thủ công
-                        val buttonLabel = if (currentStatus == OrderStatus.PENDING && order.paymentMethod == "PAY_NOW") {
-                            "Đã nhận tiền & Duyệt"
-                        } else {
-                            label
-                        }
-
                         Button(
                             onClick = { onUpdateStatus(status) },
                             modifier = Modifier.weight(1f), shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFAC2D00))
-                        ) { Text(buttonLabel, fontSize = 12.sp) }
+                        ) { Text(label, fontSize = 12.sp) }
                     }
                 }
             }
