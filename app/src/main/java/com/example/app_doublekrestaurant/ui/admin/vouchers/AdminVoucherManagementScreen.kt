@@ -140,15 +140,10 @@ fun PremiumVoucherAdminCard(
                     )
                 }
                 Spacer(Modifier.weight(1f))
-
-                // ĐÃ FIX: Bao bọc Switch bằng một Box cấu hình để tránh nuốt sự kiện onClick của Card
                 Switch(
                     checked = voucher.isActive,
-                    onCheckedChange = { _ -> onToggle() }, // Bỏ qua giá trị boolean truyền xuống để gọi trực tiếp hàm xử lý toggle của ViewModel
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = Color(0xFFAC2D00)
-                    )
+                    onCheckedChange = { onToggle() },
+                    colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFFAC2D00))
                 )
             }
 

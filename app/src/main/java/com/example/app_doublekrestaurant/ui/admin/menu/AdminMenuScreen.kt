@@ -1,6 +1,6 @@
 package com.example.app_doublekrestaurant.ui.admin.menu
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,7 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
@@ -97,7 +97,7 @@ fun AdminMenuScreen(
             )
         },
         bottomBar = {
-            AdminBottomNavigation(selectedTab = 1, onTabSelected = { 
+            AdminBottomNavigation(selectedTab = 1, onTabSelected = {
                 when(it) {
                     0 -> onNavigateToDashboard()
                     2 -> onNavigateToBooking()
@@ -118,9 +118,9 @@ fun AdminMenuScreen(
             Column(modifier = Modifier.padding(20.dp)) {
                 Text("Quản lý Thực đơn", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                 Text("Quản lý danh sách món ăn và trạng thái phục vụ", color = Color.Gray, fontSize = 14.sp)
-                
+
                 Spacer(Modifier.height(20.dp))
-                
+
                 Button(
                     onClick = onNavigateToAdd,
                     modifier = Modifier.fillMaxWidth(),
@@ -131,9 +131,9 @@ fun AdminMenuScreen(
                     Spacer(Modifier.width(8.dp))
                     Text("Thêm món mới", fontWeight = FontWeight.Bold)
                 }
-                
+
                 Spacer(Modifier.height(16.dp))
-                
+
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
@@ -157,9 +157,9 @@ fun AdminMenuScreen(
                 color = Color(0xFFF1F3F5)
             ) {
                 Row(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
-                    Text("MÓN ĂN", modifier = Modifier.weight(2f), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-                    Text("DANH MỤC", modifier = Modifier.weight(1.5f), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-                    Text("GIÁ TIỀN", modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray, textAlign = TextAlign.End)
+                    Text("MÓN ĂN", modifier = Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                    // Cố định khoảng trống cho tiêu đề cột Giá tiền tương ứng với dòng dữ liệu bên dưới
+                    Text("GIÁ TIỀN / THAO TÁC", modifier = Modifier.width(130.dp), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray, textAlign = TextAlign.End)
                 }
             }
 
@@ -171,12 +171,14 @@ fun AdminMenuScreen(
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(uiState.items.filter { it.name.contains(searchQuery, ignoreCase = true) }) { item ->
+                        // ĐA SỬA LUỒNG: Đổi sang gọi viewModel.deleteItem theo đúng thiết kế của ViewModel
                         AdminMenuItemRow(
                             item = item,
                             accentColor = accentColor,
-                            onClick = { onNavigateToEdit(item.id) }
+                            onClick = { onNavigateToEdit(item.id) },
+                            onDelete = { viewModel.deleteItem(item.id) }
                         )
-                        Divider(color = Color(0xFFF1F3F5), modifier = Modifier.padding(horizontal = 20.dp))
+                        HorizontalDivider(color = Color(0xFFF1F3F5), modifier = Modifier.padding(horizontal = 20.dp))
                     }
                     item { Spacer(Modifier.height(80.dp)) }
                 }
@@ -186,7 +188,34 @@ fun AdminMenuScreen(
 }
 
 @Composable
-fun AdminMenuItemRow(item: FoodItem, accentColor: Color, onClick: () -> Unit) {
+fun AdminMenuItemRow(
+    item: FoodItem,
+    accentColor: Color,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Xóa món ăn", fontWeight = FontWeight.Bold) },
+            text = { Text("Bạn có chắc chắn muốn xóa món '${item.name}' ra khỏi thực đơn nhà hàng không?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDelete()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = accentColor)
+                ) { Text("Xóa") }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showDeleteDialog = false }) { Text("Hủy") }
+            }
+        )
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -194,15 +223,21 @@ fun AdminMenuItemRow(item: FoodItem, accentColor: Color, onClick: () -> Unit) {
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Food Image and Name
-        Row(modifier = Modifier.weight(2f), verticalAlignment = Alignment.CenterVertically) {
+        // Cụm nội dung thông tin bên trái (Ảnh + Tên + Danh mục) - Co dãn tự động linh hoạt
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 1. Ảnh món ăn
             Box(modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFF5F5F5))) {
                 if (item.imageUrl.isNotEmpty()) {
                     AsyncImage(model = item.imageUrl, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 }
             }
             Spacer(Modifier.width(12.dp))
-            Column {
+
+            // 2. Tên món ăn
+            Column(modifier = Modifier.weight(1.2f).padding(end = 8.dp)) {
                 Text(item.name, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 if (item.isFeatured) {
                     Surface(color = Color(0xFFFFE0B2), shape = RoundedCornerShape(4.dp)) {
@@ -210,13 +245,45 @@ fun AdminMenuItemRow(item: FoodItem, accentColor: Color, onClick: () -> Unit) {
                     }
                 }
             }
+
+            // 3. Tên danh mục món ăn
+            Text(
+                text = item.categoryName,
+                modifier = Modifier.weight(0.8f),
+                color = Color.Gray,
+                fontSize = 14.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
-        
-        // Category
-        Text(item.categoryName, modifier = Modifier.weight(1.5f), color = Color.Gray, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        
-        // Price
-        Text(formatVnd(item.price).replace("₫", ""), modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, color = accentColor, textAlign = TextAlign.End, fontSize = 16.sp)
+
+        // Cụm Giá tiền & Nút xóa bên phải - Khóa cứng kích thước 130.dp bảo đảm nút xóa thẳng lề tuyệt đối
+        Row(
+            modifier = Modifier.width(130.dp),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = formatVnd(item.price).replace("₫", ""),
+                fontWeight = FontWeight.Bold,
+                color = accentColor,
+                fontSize = 16.sp,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f) // Đẩy văn bản giá tiền sát vào lề trái của cột 130.dp
+            )
+            Spacer(Modifier.width(4.dp))
+            IconButton(
+                onClick = { showDeleteDialog = true },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Xóa món",
+                    tint = Color.Gray.copy(alpha = 0.7f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
     }
 }
 

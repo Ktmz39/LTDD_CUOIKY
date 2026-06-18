@@ -33,11 +33,38 @@ class RestaurantRepositoryImpl @Inject constructor(
         if (categoryId != null) {
             query = query.whereEqualTo("categoryId", categoryId)
         }
-        
+
         val subscription = query.addSnapshotListener { snapshot, error ->
             if (error != null) { trySend(emptyList()); return@addSnapshotListener }
             val list = snapshot?.documents?.mapNotNull { doc ->
-                doc.toObject(FoodItem::class.java)?.copy(id = doc.id)
+                try {
+                    // Cách 1: Thử ép kiểu tự động thông thường
+                    doc.toObject(FoodItem::class.java)?.copy(id = doc.id)
+                } catch (e: Exception) {
+                    // Cách 2: Phòng chống sập app - Tự động bóc tách thủ công nếu dữ liệu trên Firebase lệch kiểu
+                    try {
+                        FoodItem(
+                            id = doc.id,
+                            name = doc.getString("name") ?: "",
+                            description = doc.getString("description") ?: "",
+                            price = doc.getDouble("price") ?: doc.getLong("price")?.toDouble() ?: 0.0,
+                            imageUrl = doc.getString("imageUrl") ?: "",
+                            categoryId = doc.getString("categoryId") ?: "",
+                            categoryName = doc.getString("categoryName") ?: "",
+                            isAvailable = doc.getBoolean("isAvailable") ?: true,
+                            isFeatured = doc.getBoolean("isFeatured") ?: false,
+                            isSpicy = doc.getBoolean("isSpicy") ?: false,
+                            isVegetarian = doc.getBoolean("isVegetarian") ?: false,
+                            rating = doc.getDouble("rating") ?: doc.getLong("rating")?.toDouble() ?: 0.0,
+                            reviewCount = doc.getLong("reviewCount")?.toInt() ?: 0,
+                            tags = doc.get("tags") as? List<String> ?: emptyList(),
+                            createdAt = doc.getLong("createdAt") ?: System.currentTimeMillis()
+                        )
+                    } catch (innerException: Exception) {
+                        // Nếu bản ghi đó lỗi định dạng quá nặng, bỏ qua phần tử đó để cứu app không bị crash out
+                        null
+                    }
+                }
             } ?: emptyList()
             trySend(list)
         }
