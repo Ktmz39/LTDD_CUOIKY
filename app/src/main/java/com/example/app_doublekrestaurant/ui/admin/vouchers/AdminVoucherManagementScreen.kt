@@ -51,7 +51,7 @@ fun AdminVoucherManagementScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("DoubleK", color = mainColor, fontWeight = FontWeight.Bold, fontSize = 24.sp)
                         Spacer(Modifier.width(8.dp))
@@ -140,23 +140,28 @@ fun PremiumVoucherAdminCard(
                     )
                 }
                 Spacer(Modifier.weight(1f))
+
+                // ĐÃ FIX: Bao bọc Switch bằng một Box cấu hình để tránh nuốt sự kiện onClick của Card
                 Switch(
                     checked = voucher.isActive,
-                    onCheckedChange = { onToggle() },
-                    colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFFAC2D00))
+                    onCheckedChange = { _ -> onToggle() }, // Bỏ qua giá trị boolean truyền xuống để gọi trực tiếp hàm xử lý toggle của ViewModel
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = Color(0xFFAC2D00)
+                    )
                 )
             }
-            
+
             Spacer(Modifier.height(12.dp))
-            
+
             Text(voucher.title.ifEmpty { voucher.description }, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
             if (voucher.description.isNotEmpty()) {
                 Spacer(Modifier.height(4.dp))
                 Text(voucher.description, fontSize = 14.sp, color = Color.DarkGray)
             }
-            
+
             Spacer(Modifier.height(12.dp))
-            
+
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
                     val discountText = when (voucher.type) {
@@ -200,12 +205,12 @@ fun VoucherDialog(
             Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(value = code, onValueChange = { code = it.uppercase() }, label = { Text("Mã Voucher") }, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Mô tả") }, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth())
-                
+
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(value = discountAmount, onValueChange = { discountAmount = it }, label = { Text("Số tiền giảm") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), shape = RoundedCornerShape(12.dp), modifier = Modifier.weight(1f))
                     OutlinedTextField(value = discountPercentage, onValueChange = { discountPercentage = it }, label = { Text("% Giảm") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), shape = RoundedCornerShape(12.dp), modifier = Modifier.weight(1f))
                 }
-                
+
                 OutlinedTextField(value = minOrder, onValueChange = { minOrder = it }, label = { Text("Đơn tối thiểu") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = maxDiscount, onValueChange = { maxDiscount = it }, label = { Text("Giảm tối đa") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth())
             }

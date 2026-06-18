@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.app_doublekrestaurant.ui.auth.AuthViewModel
 import coil3.compose.AsyncImage
-import com.example.app_doublekrestaurant.util.CloudinaryService
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -102,8 +101,8 @@ fun UserProfileScreen(
                             .size(90.dp)
                             .clip(CircleShape)
                             .background(Color.White)
-                            .clickable(enabled = !authState.isUploadingImage) { 
-                                launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) 
+                            .clickable(enabled = !authState.isUploadingImage) {
+                                launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                             },
                         contentAlignment = Alignment.Center
                     ) {
@@ -120,8 +119,7 @@ fun UserProfileScreen(
                                 color = Color(0xFFAC2D00), fontWeight = FontWeight.Bold, fontSize = 36.sp
                             )
                         }
-                        
-                        // Loading overlay or subtle camera hint at bottom
+
                         if (authState.isUploadingImage) {
                             Box(
                                 modifier = Modifier
@@ -137,7 +135,6 @@ fun UserProfileScreen(
                                 )
                             }
                         } else {
-                            // Small camera hint at bottom
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
@@ -162,7 +159,7 @@ fun UserProfileScreen(
                         Text(user.phone, color = Color.White.copy(0.7f), style = MaterialTheme.typography.bodySmall)
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    // Role badge
+
                     Surface(
                         shape = RoundedCornerShape(20.dp),
                         color = Color.White.copy(0.2f)
@@ -191,10 +188,8 @@ fun UserProfileScreen(
 
                     Text("Tài khoản", style = MaterialTheme.typography.titleSmall, color = Color.Gray, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
                     ProfileMenuCard {
-                        ProfileMenuItem("Thông tin cá nhân", Icons.Default.Person, Color(0xFF1976D2))
+                        // ĐÃ TỐI ƯU: Chỉ giữ lại chức năng đổi mật khẩu hoạt động ổn định
                         ProfileMenuItem("Đổi mật khẩu", Icons.Default.Lock, Color(0xFFFFA000)) { onNavigateToChangePassword() }
-                        ProfileMenuItem("Địa chỉ đã lưu", Icons.Default.LocationOn, Color(0xFF2E7D32))
-                        ProfileMenuItem("Phương thức thanh toán", Icons.Default.CreditCard, Color(0xFFAC2D00))
                     }
 
                     Text("Hoạt động", style = MaterialTheme.typography.titleSmall, color = Color.Gray, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
