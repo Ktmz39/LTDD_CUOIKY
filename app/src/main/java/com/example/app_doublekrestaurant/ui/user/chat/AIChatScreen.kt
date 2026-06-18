@@ -33,7 +33,8 @@ fun AIChatScreen(
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(uiState.messages.size) {
+    // Tự động cuộn xuống tin nhắn mới nhất khi số lượng tin nhắn thay đổi hoặc AI đang gõ
+    LaunchedEffect(uiState.messages.size, uiState.isTyping) {
         if (uiState.messages.isNotEmpty()) {
             scope.launch {
                 listState.animateScrollToItem(uiState.messages.size - 1)
@@ -82,13 +83,13 @@ fun AIChatScreen(
                     Spacer(Modifier.width(8.dp))
                     FloatingActionButton(
                         onClick = {
-                            if (inputText.isNotBlank()) {
+                            if (inputText.isNotBlank() && !uiState.isTyping) {
                                 viewModel.sendMessage(inputText)
                                 inputText = ""
                             }
                         },
                         modifier = Modifier.size(48.dp),
-                        containerColor = Color(0xFFAC2D00),
+                        containerColor = if (uiState.isTyping || inputText.isBlank()) Color.Gray else Color(0xFFAC2D00),
                         contentColor = Color.White,
                         shape = CircleShape,
                         elevation = FloatingActionButtonDefaults.elevation(0.dp)
@@ -155,9 +156,9 @@ fun TypingIndicator() {
             shadowElevation = 0.5.dp
         ) {
             Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("AI đang nhập", fontSize = 12.sp, color = Color.Gray)
-                Spacer(Modifier.width(4.dp))
-                CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 2.dp, color = Color(0xFFAC2D00))
+                Text("AI đang suy nghĩ", fontSize = 12.sp, color = Color.Gray)
+                Spacer(Modifier.width(8.dp))
+                LinearProgressIndicator(modifier = Modifier.width(30.dp), color = Color(0xFFAC2D00))
             }
         }
     }

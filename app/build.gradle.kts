@@ -60,6 +60,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
+    // Gemini AI SDK (Mình đã thêm dòng này vào đây cho bạn)
+    implementation(libs.google.generativeai)
+
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

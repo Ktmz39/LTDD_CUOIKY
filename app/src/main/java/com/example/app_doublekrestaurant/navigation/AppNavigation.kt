@@ -29,7 +29,7 @@ import com.example.app_doublekrestaurant.ui.user.menu.UserMenuScreen
 import com.example.app_doublekrestaurant.ui.admin.reports.AdminReportsScreen
 import com.example.app_doublekrestaurant.ui.user.reviews.UserSubmitReviewScreen
 import com.example.app_doublekrestaurant.ui.user.home.UserFoodDetailScreen
-import com.example.app_doublekrestaurant.ui.user.payment.QRPaymentScreen
+//import com.example.app_doublekrestaurant.ui.user.payment.QRPaymentScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController, startDestination: String) {
@@ -101,37 +101,48 @@ fun AppNavigation(navController: NavHostController, startDestination: String) {
                 onNavigateToAIChat = { navController.navigate(Screen.UserAIChat.route) }
             )
         }
+//        composable(Screen.UserCart.route) {
+//            com.example.app_doublekrestaurant.ui.user.cart.UserCartScreen(
+//                viewModel = cartViewModel,
+//                onBack = { navController.popBackStack() },
+//                onCheckoutSuccess = { navController.navigate(Screen.UserOrderStatus.route) { popUpTo(Screen.UserHome.route) } },
+//                onNavigateToQRPayment = { amount ->
+//                    navController.navigate(Screen.UserQRPayment.createRoute(amount))
+//                }
+//            )
+//        }
         composable(Screen.UserCart.route) {
             com.example.app_doublekrestaurant.ui.user.cart.UserCartScreen(
                 viewModel = cartViewModel,
                 onBack = { navController.popBackStack() },
                 onCheckoutSuccess = { navController.navigate(Screen.UserOrderStatus.route) { popUpTo(Screen.UserHome.route) } },
                 onNavigateToQRPayment = { amount ->
-                    navController.navigate(Screen.UserQRPayment.createRoute(amount))
+                    // Tạm thời quay về trang chủ hoặc không làm gì để tránh crash
+                    navController.navigate(Screen.UserHome.route)
                 }
             )
         }
-        composable(
-            route = Screen.UserQRPayment.route,
-            arguments = listOf(navArgument("totalAmount") { type = NavType.LongType })
-        ) { backStackEntry ->
-            val amount = backStackEntry.arguments?.getLong("totalAmount") ?: 0L
-            QRPaymentScreen(
-                totalAmount = amount,
-                onPaymentConfirmed = {
-                    // Checkout với PAY_NOW sau khi user xác nhận đã chuyển khoản
-                    cartViewModel.checkout(
-                        paymentMethod = com.example.app_doublekrestaurant.data.model.PaymentMethod.PAY_NOW,
-                        onSuccess = {
-                            navController.navigate(Screen.UserOrderStatus.route) {
-                                popUpTo(Screen.UserHome.route)
-                            }
-                        }
-                    )
-                },
-                onBack = { navController.popBackStack() }
-            )
-        }
+//        composable(
+//            route = Screen.UserQRPayment.route,
+//            arguments = listOf(navArgument("totalAmount") { type = NavType.LongType })
+//        ) { backStackEntry ->
+//            val amount = backStackEntry.arguments?.getLong("totalAmount") ?: 0L
+//            QRPaymentScreen(
+//                totalAmount = amount,
+//                onPaymentConfirmed = {
+//                    // Checkout với PAY_NOW sau khi user xác nhận đã chuyển khoản
+//                    cartViewModel.checkout(
+//                        paymentMethod = com.example.app_doublekrestaurant.data.model.PaymentMethod.PAY_NOW,
+//                        onSuccess = {
+//                            navController.navigate(Screen.UserOrderStatus.route) {
+//                                popUpTo(Screen.UserHome.route)
+//                            }
+//                        }
+//                    )
+//                },
+//                onBack = { navController.popBackStack() }
+//            )
+//        }
         composable(Screen.UserOrderStatus.route) {
             SuccessScreen(title = "Đặt hàng thành công! 🎉", message = "Đơn hàng đã được gửi đến nhà hàng.\nChúng tôi sẽ xác nhận trong vài phút.", onAction = { navController.navigate(Screen.UserHome.route) { popUpTo(0) } })
         }
