@@ -188,7 +188,7 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
                 }
             }
 
-            // 1. Định nghĩa trạng thái tiếp theo và cấu hình nhãn nút tiến trình duyệt đơn
+            // 1. Xác định trạng thái kế tiếp của đơn hàng
             val nextStatus = when (currentStatus) {
                 OrderStatus.PENDING -> {
                     val label = if (order.paymentMethod == "PAY_NOW") "Đã nhận tiền & Duyệt" else "Xác nhận"
@@ -200,12 +200,12 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
                 else -> null
             }
 
-            // 2. Tách biệt hoàn toàn luồng hiển thị nút bấm để loại bỏ cảnh báo "Always false"
-            if (nextStatus != null || currentStatus == OrderStatus.PENDING) {
+            // 2. ĐÃ ĐỒNG BỘ TRIỆT ĐỂ: Loại bỏ khối bọc ngoài, để các nút tự quyết định hiển thị độc lập
+            if (currentStatus == OrderStatus.PENDING || nextStatus != null) {
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 
-                    // Nút Hủy: Chỉ xuất hiện khi đơn hàng đang ở trạng thái CHỜ DUYỆT (PENDING)
+                    // Nút Hủy đơn: Chỉ vẽ khi trạng thái là PENDING
                     if (currentStatus == OrderStatus.PENDING) {
                         OutlinedButton(
                             onClick = { onUpdateStatus(OrderStatus.CANCELLED) },
@@ -217,7 +217,7 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
                         }
                     }
 
-                    // Nút Tiến trình giao dịch: Duyệt đơn / Bắt đầu làm / Hoàn thành
+                    // Nút Tiến độ: Duyệt đơn / Tiến hành chế biến...
                     if (nextStatus != null) {
                         val (status, label) = nextStatus
                         Button(
