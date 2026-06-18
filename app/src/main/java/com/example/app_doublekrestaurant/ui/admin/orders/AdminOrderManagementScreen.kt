@@ -188,7 +188,7 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
                 }
             }
 
-            // ĐÃ SỬA: Chuẩn hóa logic gán nhãn nút bấm để khử sạch lỗi cảnh báo Always False
+            // 1. Định nghĩa trạng thái tiếp theo và cấu hình nhãn nút tiến trình duyệt đơn
             val nextStatus = when (currentStatus) {
                 OrderStatus.PENDING -> {
                     val label = if (order.paymentMethod == "PAY_NOW") "Đã nhận tiền & Duyệt" else "Xác nhận"
@@ -200,22 +200,34 @@ fun AdminOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
                 else -> null
             }
 
+            // 2. Tách biệt hoàn toàn luồng hiển thị nút bấm để loại bỏ cảnh báo "Always false"
             if (nextStatus != null || currentStatus == OrderStatus.PENDING) {
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                    // Nút Hủy: Chỉ xuất hiện khi đơn hàng đang ở trạng thái CHỜ DUYỆT (PENDING)
                     if (currentStatus == OrderStatus.PENDING) {
                         OutlinedButton(
                             onClick = { onUpdateStatus(OrderStatus.CANCELLED) },
-                            modifier = Modifier.weight(1f), shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)
-                        ) { Text("Hủy", fontSize = 12.sp) }
+                        ) {
+                            Text("Hủy", fontSize = 12.sp)
+                        }
                     }
-                    nextStatus?.let { (status, label) ->
+
+                    // Nút Tiến trình giao dịch: Duyệt đơn / Bắt đầu làm / Hoàn thành
+                    if (nextStatus != null) {
+                        val (status, label) = nextStatus
                         Button(
                             onClick = { onUpdateStatus(status) },
-                            modifier = Modifier.weight(1f), shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFAC2D00))
-                        ) { Text(label, fontSize = 12.sp) }
+                        ) {
+                            Text(label, fontSize = 12.sp)
+                        }
                     }
                 }
             }
